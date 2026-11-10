@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>四强对决 · 谁能帮你做出一个跳跃躲避小游戏</title>
+<script>document.documentElement.classList.add('js');</script>
+<style>
+  :root{
+    --bg:#070a10;
+    --panel:rgba(255,255,255,.045);
+    --line:rgba(255,255,255,.09);
+    --text:#e8eefb;
+    --muted:#93a1b8;
+    --cyan:#22d3ee;
+    --violet:#a78bfa;
+    --lime:#a3e635;
+    --amber:#fbbf24;
+    --green:#4ade80;
+    --red:#fb7185;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:
+      radial-gradient(700px 500px at 12% -8%, rgba(34,211,238,.16), transparent 65%),
+      radial-gradient(800px 600px at 88% 4%, rgba(167,139,250,.16), transparent 65%),
+      radial-gradient(700px 500px at 50% 105%, rgba(74,222,128,.08), transparent 60%);
+    pointer-events:none;
+    z-index:0;
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+                     linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 30%, transparent 78%);
+    -webkit-mask-image:radial-gradient(circle at 50% 30%, #000 30%, transparent 78%);
+    pointer-events:none;
+    z-index:0;
+  }
+  .shell{position:relative;z-index:1;}
+  .wrap{width:min(1180px,92vw);margin:0 auto;}
+
+  /* ---------- nav ---------- */
+  nav{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(14px);
+    background:rgba(7,10,16,.72);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;gap:18px;height:64px;}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.4px;}
+  .brand-dot{
+    width:26px;height:26px;border-radius:9px;
+    background:linear-gradient(135deg,var(--cyan),var(--violet));
+    box-shadow:0 0 18px rgba(34,211,238,.5);
+    position:relative;
+  }
+  .brand-dot::after{content:"";position:absolute;inset:7px;border-radius:4px;background:#070a10;}
+  .nav-links{display:flex;gap:6px;flex-wrap:wrap;}
+  .nav-links a{
+    color:var(--muted);text-decoration:none;font-size:14px;
+    padding:7px 12px;border-radius:9px;transition:.2s;
+  }
+  .nav-links a:hover{color:#fff;background:rgba(255,255,255,.07);}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:86px 0 52px;position:relative;}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:12.5px;letter-spacing:2px;color:var(--cyan);
+    border:1px solid rgba(34,211,238,.3);
+    background:rgba(34,211,238,.07);
+    padding:6px 14px;border-radius:99px;margin-bottom:22px;
+  }
+  .eyebrow .pulse{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)}}
+  h1{
+    font-size:clamp(34px,5.4vw,64px);
+    line-height:1.12;
+    margin:0 0 22px;
+    font-weight:850;
+    letter-spacing:-1.2px;
+  }
+  h1 .grad{
+    background:linear-gradient(100deg,var(--cyan) 0%,#7dd3fc 30%,var(--violet) 62%,#f0abfc 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .lede{font-size:clamp(15px,1.5vw,18px);color:var(--muted);max-width:720px;margin:0 0 30px;}
+  .lede strong{color:#dfe9f8;font-weight:600;}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    font:inherit;font-weight:700;font-size:15px;
+    padding:13px 24px;border-radius:12px;border:1px solid transparent;
+    cursor:pointer;text-decoration:none;transition:.22s;
+  }
+  .btn-primary{
+    color:#04121a;
+    background:linear-gradient(135deg,#67e8f9,var(--cyan) 45%,#8b5cf6 100%);
+    box-shadow:0 10px 30px -10px rgba(34,211,238,.75);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 38px -12px rgba(34,211,238,.9);}
+  .btn-ghost{color:var(--text);background:rgba(255,255,255,.05);border-color:var(--line);}
+  .btn-ghost:hover{background:rgba(255,255,255,.1);transform:translateY(-2px);}
+  .facts{display:flex;gap:34px;flex-wrap:wrap;margin-top:46px;padding-top:26px;border-top:1px solid var(--line);}
+  .fact b{display:block;font-size:26px;font-weight:800;letter-spacing:-.5px;}
+  .fact span{font-size:13px;color:var(--muted);}
+
+  /* ---------- section common ---------- */
+  section{padding:64px 0;position:relative;}
+  .sec-head{margin-bottom:38px;}
+  .sec-tag{
+    font-size:12px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--violet);font-weight:700;margin-bottom:12px;
+  }
+  h2{font-size:clamp(24px,3.2vw,36px);margin:0 0 12px;font-weight:800;letter-spacing:-.6px;}
+  .sec-desc{color:var(--muted);max-width:720px;margin:0;font-size:15.5px;}
+
+  /* ---------- players ---------- */
+  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;}
+  .card{
+    position:relative;overflow:hidden;
+    background:linear-gradient(165deg,rgba(255,255,255,.058),rgba(255,255,255,.014));
+    border:1px solid var(--line);
+    border-radius:20px;padding:26px 26px 24px;
+    transition:transform .28s ease,border-color .28s ease,box-shadow .28s ease;
+  }
+  .card::before{
+    content:"";position:absolute;left:0;right:0;top:0;height:2px;
+    background:linear-gradient(90deg,transparent,var(--c),transparent);
+    opacity:.9;
+  }
+  .card::after{
+    content:"";position:absolute;width:220px;height:220px;right:-90px;top:-110px;
+    background:radial-gradient(circle,var(--glow),transparent 70%);
+    pointer-events:none;opacity:.55;
+  }
+  .card:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--c) 45%,transparent);box-shadow:0 26px 60px -30px var(--glow);}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:6px;}
+  .card-name{display:flex;align-items:center;gap:11px;}
+  .logo{
+    width:40px;height:40px;border-radius:12px;flex:none;
+    display:grid;place-items:center;font-weight:800;font-size:15px;
+    color:#05101a;background:var(--c);
+    box-shadow:0 8px 22px -8px var(--glow);
+    letter-spacing:-.5px;
+  }
+  .card-name h3{font-size:19px;margin:0;font-weight:800;letter-spacing:-.2px;}
+  .card-name p{margin:0;font-size:12.5px;color:var(--muted);}
+  .badge{
+    font-size:11.5px;padding:4px 10px;border-radius:99px;white-space:nowrap;
+    color:var(--c);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);
+    background:color-mix(in srgb,var(--c) 10%,transparent);
+  }
+  .role{
+    font-size:13.5px;color:#c8d5e8;margin:16px 0 18px;
+    padding-left:12px;border-left:2px solid color-mix(in srgb,var(--c) 55%,transparent);
+  }
+  .pc{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .pc h4{
+    margin:0 0 8px;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;
+    display:flex;align-items:center;gap:6px;
+  }
+  .pc.good h4{color:var(--green);}
+  .pc.bad h4{color:var(--red);}
+  .pc ul{margin:0;padding:0;list-style:none;}
+  .pc li{font-size:13.2px;color:#b9c6d9;padding-left:15px;position:relative;margin-bottom:7px;line-height:1.55;}
+  .pc li::before{position:absolute;left:0;top:0;font-size:11px;}
+  .pc.good li::before{content:"+";color:var(--green);font-weight:800;}
+  .pc.bad li::before{content:"–";color:var(--red);font-weight:800;}
+  .fit{margin-top:18px;padding-top:14px;border-top:1px dashed rgba(255,255,255,.1);font-size:12.8px;color:var(--muted);}
+  .fit b{color:#dbe6f5;font-weight:600;}
+
+  /* ---------- compare table ---------- */
+  .table-card{
+    border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));
+  }
+  .table-scroll{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;min-width:780px;font-size:14px;}
+  thead th{
+    text-align:left;padding:16px 18px;font-size:12.5px;letter-spacing:.6px;
+    color:#cfdcee;background:rgba(255,255,255,.04);
+    border-bottom:1px solid var(--line);font-weight:700;white-space:nowrap;
+  }
+  thead th span{display:block;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:0;}
+  tbody td{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(255,255,255,.028);}
+  tbody td:first-child{color:#c9d6e8;font-weight:600;white-space:nowrap;}
+  .meter{display:flex;align-items:center;gap:10px;min-width:130px;}
+  .bar{flex:1;height:6px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--c),#fff6);}
+  .meter em{font-style:normal;font-size:12px;color:var(--muted);width:26px;text-align:right;font-variant-numeric:tabular-nums;}
+  .note{font-size:12.5px;color:#7d8ba1;margin-top:14px;}
+
+  /* ---------- division of labor ---------- */
+  .flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
+  .step{
+    position:relative;border:1px solid var(--line);border-radius:16px;padding:22px 20px;
+    background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.012));
+  }
+  .step .idx{
+    font-size:12px;font-weight:800;letter-spacing:1px;color:var(--cyan);
+    display:inline-block;padding:2px 9px;border-radius:6px;background:rgba(34,211,238,.1);
+    border:1px solid rgba(34,211,238,.25);margin-bottom:14px;
+  }
+  .step h3{font-size:16px;margin:0 0 8px;font-weight:750;}
+  .step p{margin:0;font-size:13px;color:var(--muted);line-height:1.65;}
+  .step .who{margin-top:14px;display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{
+    font-size:11.5px;padding:3px 9px;border-radius:99px;
+    border:1px solid rgba(255,255,255,.14);color:#c6d3e6;background:rgba(255,255,255,.05);
+  }
+
+  /* ---------- game ---------- */
+  #game-section{padding-top:26px;}
+  .game-card{
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:24px;
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.014));
+    padding:18px;
+    box-shadow:0 40px 100px -60px rgba(34,211,238,.8), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .game-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:4px 6px 16px;}
+  .game-title{display:flex;align-items:center;gap:12px;}
+  .game-title h3{margin:0;font-size:20px;letter-spacing:-.2px;}
+  .game-title p{margin:0;font-size:12.5px;color:var(--muted);}
+  .game-title .logo{background:linear-gradient(135deg,var(--cyan),var(--violet));box-shadow:0 8px 24px -8px rgba(34,211,238,.8);color:#04121a;font-size:18px;}
+  .hud{display:flex;gap:10px;flex-wrap:wrap;}
+  .hud-item{
+    min-width:88px;padding:8px 14px;border-radius:12px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);
+  }
+  .hud-item span{display:block;font-size:10.5px;letter-spacing:1.4px;color:#7f8ea6;text-transform:uppercase;}
+  .hud-item strong{font-size:19px;font-variant-numeric:tabular-nums;letter-spacing:-.4px;}
+  .canvas-shell{
+    position:relative;border-radius:16px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.1);
+    background:#050a12;
+    box-shadow:inset 0 0 60px rgba(0,0,0,.8);
+    outline:none;
+  }
+  canvas{display:block;width:100%;height:auto;touch-action:manipulation;}
+  .game-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:16px 6px 4px;}
+  .keys{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);}
+  .keys b{
+    display:inline-block;min-width:24px;text-align:center;
+    padding:2px 7px;margin-right:5px;border-radius:6px;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
+    color:#dce8f7;font-size:11.5px;font-family:ui-monospace,monospace;
+  }
+  .touch{display:none;gap:12px;}
+  .touch button{
+    font:inherit;font-weight:800;font-size:14px;color:#dff5fb;
+    min-width:104px;padding:14px 10px;border-radius:14px;
+    background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.35);
+    cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;
+  }
+  .touch button:active{background:rgba(34,211,238,.3);transform:scale(.97);}
+  .takeaway{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:26px;}
+  .take{border:1px solid var(--line);border-radius:16px;padding:20px;background:rgba(255,255,255,.03);}
+  .take h4{margin:0 0 6px;font-size:14.5px;color:#e6eefb;}
+  .take p{margin:0;font-size:13px;color:var(--muted);}
+
+  footer{padding:46px 0 60px;border-top:1px solid rgba(255,255,255,.06);margin-top:40px;}
+  .foot-inner{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:13px;color:#7f8ea6;}
+
+  /* reveal */
+  .reveal{transition:opacity .7s ease,transform .7s ease;}
+  .js .reveal{opacity:0;transform:translateY(22px);}
+  .js .reveal.in{opacity:1;transform:none;}
+
+  @media (max-width:980px){
+    .grid{grid-template-columns:1fr;}
+    .flow{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .takeaway{grid-template-columns:1fr;}
+    .facts{gap:22px;}
+  }
+  @media (max-width:640px){
+    .nav-links{display:none;}
+    header.hero{padding:54px 0 30px;}
+    nav .nav-inner{height:58px;}
+    .card{padding:22px 20px;}
+    .pc{grid-template-columns:1fr;gap:12px;}
+    .touch{display:flex;width:100%;}
+    .touch button{flex:1;}
+    .keys{display:none;}
+    .game-card{padding:12px;border-radius:18px;}
+    .hud-item{min-width:74px;padding:6px 11px;}
+    .hud-item strong{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav>
+  <div class="wrap nav-inner">
+    <div class="brand"><span class="brand-dot"></span>四强对决 / AI Tool Arena</div>
+    <div class="nav-links">
+      <a href="#players">选手档案</a>
+      <a href="#compare">横向对比</a>
+      <a href="#division">做游戏的分工</a>
+      <a href="#game-section">试玩</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow"><span class="pulse"></span>2026 · 主观评测 · 以「造一个小游戏」为场景</div>
+    <h1>ChatGPT、Claude、Trae、WorkBuddy<br><span class="grad">谁更适合陪你做一个小游戏？</span></h1>
+    <p class="lede">
+      我们把四个工具放进同一个考题：<strong>从零做一个「跳跃躲避」小游戏</strong>——需要玩法设计、物理循环、多文件工程、调参试错，最后还得包装成一个能发给别人玩的页面。这篇页面不吹参数，只聊在真实流程里谁更顺手、谁在哪一步掉链子，最后附上亲手能玩的成品。
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#game-section">直接试玩 ↓</a>
+      <a class="btn btn-ghost" href="#players">先看评测</a>
+    </div>
+    <div class="facts">
+      <div class="fact"><b>4</b><span>被测工具</span></div>
+      <div class="fact"><b>6</b><span>对比维度</span></div>
+      <div class="fact"><b>1</b><span>可玩成品（Canvas 无依赖）</span></div>
+      <div class="fact"><b>双跳 / 蹲避</b><span>核心操作机制</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="players">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Round 01 · 选手档案</div>
+      <h2>四个工具，四种完全不同的「强」</h2>
+      <p class="sec-desc">它们的差异不在于谁更聪明，而在于「交付形态」不同：对话框、长文档、IDE 仓库、办公成品。搞混这一点，就会用错工具。</p>
+    </div>
+
+    <div class="grid">
+      <!-- ChatGPT -->
+      <article class="card reveal" style="--c:#22d3ee;--glow:rgba(34,211,238,.35)">
+        <div class="card-top">
+          <div class="card-name">
+            <div class="logo">GPT</div>
+            <div><h3>ChatGPT</h3><p>OpenAI · 通用型全能选手</p></div>
+          </div>
+          <div class="badge">点子最快落地</div>
+        </div>
+        <div class="role">擅长把「模糊的想法」在十分钟内变成「能看见的东西」，生态和插件最全。</div>
+        <div class="pc good">
+          <h4>优势</h4>
+          <ul>
+            <li>多模态强，文案、分析、图形、代码一站搞定</li>
+            <li>对话式迭代快，适合脑暴玩法与数值</li>
+            <li>生态成熟，第三方集成与教程最多</li>
+          </ul>
+        </div>
+        <div class="pc bad">
+          <h4>短板</h4>
+          <ul>
+            <li>长任务容易丢细节，需要反复贴上下文</li>
+            <li>不是 IDE，多文件工程要人肉搬运</li>
+            <li>偶尔「自信地」编造 API 或参数</li>
+          </ul>
+        </div>
+        <div class="fit"><b>做游戏时：</b>负责开场脑暴、玩法循环设计、写文案与说明。</div>
+      </article>
+
+      <!-- Claude -->
+      <article class="card reveal" style="--c:#f0a06a;--glow:rgba(240,160,106,.35)">
+        <div class="card-top">
+          <div class="card-name">
+            <div class="logo">CL</div>
+            <div><h3>Claude</h3><p>Anthropic · 长文本与代码理解</p></div>
+          </div>
+          <div class="badge">第一版代码最干净</div>
+        </div>
+        <div class="role">长上下文里最稳的那一个，擅长把设计文档一次性变成结构清晰、注释合理的代码。</div>
+        <div class="pc good">
+          <h4>优势</h4>
+          <ul>
+            <li>长文档 / 大文件理解稳，几乎不跑偏</li>
+            <li>Artifacts 能直接产出可运行的单页</li>
+            <li>重构与 Review 语感好，实现偏保守可靠</li>
+          </ul>
+        </div>
+        <div class="pc bad">
+          <h4>短板</h4>
+          <ul>
+            <li>单文件很强，真实多文件工程仍需自己搭</li>
+            <li>玩法调参要靠人反复试、再把结果贴回去</li>
+            <li>能力边界受客户端工具链影响较大</li>
+          </ul>
+        </div>
+        <div class="fit"><b>做游戏时：</b>负责游戏主循环、物理与碰撞逻辑的初版实现。</div>
+      </article>
+
+      <!-- Trae -->
+      <article class="card reveal" style="--c:#a78bfa;--glow:rgba(167,139,250,.38)">
+        <div class="card-top">
+          <div class="card-name">
+            <div class="logo">TR</div>
+            <div><h3>Trae</h3><p>AI IDE · 直接在仓库里干活</p></div>
+          </div>
+          <div class="badge">真正能上线</div>
+        </div>
+        <div class="role">不聊天，直接改文件、跑命令、看终端报错，把一个想法变成可维护的工程。</div>
+        <div class="pc good">
+          <h4>优势</h4>
+          <ul>
+            <li>读写项目文件 + 执行命令，改完立刻验证</li>
+            <li>多文件协同（HTML / CSS / JS 联动）不用搬运</li>
+            <li>定位精准，适合长期迭代与维护</li>
+          </ul>
+        </div>
+        <div class="pc bad">
+          <h4>短板</h4>
+          <ul>
+            <li>依赖本地环境，配置或网络问题要自己排查</li>
+            <li>非工程产出（PPT、软文）不是主场</li>
+            <li>目标不清晰时容易「做多」，需要收着点</li>
+          </ul>
+        </div>
+        <div class="fit"><b>做游戏时：</b>负责把代码落进真实文件、起服务、修 bug、上线。</div>
+      </article>
+
+      <!-- WorkBuddy -->
+      <article class="card reveal" style="--c:#a3e635;--glow:rgba(163,230,53,.32)">
+        <div class="card-top">
+          <div class="card-name">
+            <div class="logo">WB</div>
+            <div><h3>WorkBuddy</h3><p>办公与交付导向的助手</p></div>
+          </div>
+          <div class="badge">成品最好看</div>
+        </div>
+        <div class="role">关注「最后交给别人看的那一版」，文档、图表、页面包装和讲解都更成体系。</div>
+        <div class="pc good">
+          <h4>优势</h4>
+          <ul>
+            <li>直接产出可交付物：文档、表格、演示、报告</li>
+            <li>交互式可视化，解释机制特别直观</li>
+            <li>擅长串流程：调研 → 产出 → 展示</li>
+          </ul>
+        </div>
+        <div class="pc bad">
+          <h4>短板</h4>
+          <ul>
+            <li>深层工程问题（性能、构建、调试）覆盖有限</li>
+            <li>交付风格偏模板化，精细定制需多轮打磨</li>
+            <li>项目级代码治理不是它的战场</li>
+          </ul>
+        </div>
+        <div class="fit"><b>做游戏时：</b>负责页面包装、说明文档、把成果讲清楚。</div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Round 02 · 横向对比</div>
+      <h2>换六个维度，差距就具体了</h2>
+      <p class="sec-desc">评分基于「做出并交付一个可玩小游戏」这一任务的主观体感，满分 5 分。同一个工具在不同任务里分数会变，别当成通用排名。</p>
+    </div>
+
+    <div class="table-card reveal">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>能力维度</th>
+              <th><span style="color:#22d3ee">ChatGPT</span><span>通用对话</span></th>
+              <th><span style="color:#f0a06a">Claude</span><span>长文 + 代码</span></th>
+              <th><span style="color:#a78bfa">Trae</span><span>仓库级 IDE</span></th>
+              <th><span style="color:#a3e635">WorkBuddy</span><span>成品交付</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>玩法与创意发散</td>
+              <td><div class="meter" style="--c:#22d3ee"><div class="bar"><i style="width:96%"></i></div><em>4.8</em></div></td>
+              <td><div class="meter" style="--c:#f0a06a"><div class="bar"><i style="width:82%"></i></div><em>4.1</em></div></td>
+              <td><div class="meter" style="--c:#a78bfa"><div class="bar"><i style="width:72%"></i></div><em>3.6</em></div></td>
+              <td><div class="meter" style="--c:#a3e635"><div class="bar"><i style="width:86%"></i></div><em>4.3</em></div></td>
+            </tr>
+            <tr>
+              <td>单文件代码质量</td>
+              <td><div class="meter" style="--c:#22d3ee"><div class="bar"><i style="width:84%"></i></div><em>4.2</em></div></td>
+              <td><div class="meter" style="--c:#f0a06a"><div class="bar"><i style="width:94%"></i></div><em>4.7</em></div></td>
+              <td><div class="meter" style="--c:#a78bfa"><div class="bar"><i style="width:90%"></i></div><em>4.5</em></div></td>
+              <td><div class="meter" style="--c:#a3e635"><div class="bar"><i style="width:74%"></i></div><em>3.7</em></div></td>
+            </tr>
+            <tr>
+              <td>多文件工程改造</td>
+              <td><div class="meter" style="--c:#22d3ee"><div class="bar"><i style="width:46%"></i></div><em>2.3</em></div></td>
+              <td><div class="meter" style="--c:#f0a06a"><div class="bar"><i style="width:62%"></i></div><em>3.1</em></div></td>
+              <td><div class="meter" style="--c:#a78bfa"><div class="bar"><i style="width:98%"></i></div><em>4.9</em></div></td>
+              <td><div class="meter" style="--c:#a3e635"><div class="bar"><i style="width:50%"></i></div><em>2.5</em></div></td>
+            </tr>
+            <tr>
+              <td>跑起来 + 调 bug</td>
+              <td><div class="meter" style="--c:#22d3ee"><div class="bar"><i style="width:52%"></i></div><em>2.6</em></div></td>
+              <td><div class="meter" style="--c:#f0a06a"><div class="bar"><i style="width:56%"></i></div><em>2.8</em></div></td>
+              <td><div class="meter" style="--c:#a78bfa"><div class="bar"><i style="width:96%"></i></div><em>4.8</em></div></td>
+              <td><div class="meter" style="--c:#a3e635"><div class="bar"><i style="width:44%"></i></div><em>2.2</em></div></td>
+            </tr>
+            <tr>
+              <td>可视化 / 成品观感</td>
+              <td><div class="meter" style="--c:#22d3ee"><div class="bar"><i style="width:82%"></i></div><em>4.1</em></div></td>
+              <td><div class="meter" style="--c:#f0a06a"><div class="bar"><i style="width:80%"></i></div><em>4.0</em></div></td>
+              <td><div class="meter" style="--c:#a78bfa"><div class="bar"><i style="width:84%"></i></div><em>4.2</em></div></td>
+              <td><div class="meter" style="--c:#a3e635"><div class="bar"><i style="width:96%"></i></div><em>4.8</em></div></td>
+            </tr>
+            <tr>
+              <td>上手门槛（越高越易用）</td>
+              <td><div class="meter" style="--c:#22d3ee"><div class="bar"><i style="width:96%"></i></div><em>4.8</em></div></td>
+              <td><div class="meter" style="--c:#f0a06a"><div class="bar"><i style="width:90%"></i></div><em>4.5</em></div></td>
+              <td><div class="meter" style="--c:#a78bfa"><div class="bar"><i style="width:70%"></i></div><em>3.5</em></div></td>
+              <td><div class="meter" style="--c:#a3e635"><div class="bar"><i style="width:92%"></i></div><em>4.6</em></div></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note">结论很清楚：没有全能冠军。真正高效的做法是「串联」——用 ChatGPT 想清楚，用 Claude 写好第一版，用 Trae 落地并调通，用 WorkBuddy 包装成可分享的成果。</p>
+  </div>
+</section>
+
+<section id="division">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Round 03 · 做游戏的四个阶段</div>
+      <h2>一个跳跃躲避小游戏，其实分四步</h2>
+      <p class="sec-desc">小游戏最容易踩的坑不是「不会写」，而是「写出来不好玩」。下面每一阶段都标了最适合上场的工具。</p>
+    </div>
+
+    <div class="flow">
+      <div class="step reveal">
+        <div class="idx">STEP 01</div>
+        <h3>玩法定义</h3>
+        <p>核心动词只有一个：跳。再决定次要动词（二段跳、下蹲）、失败条件、计分方式和难度曲线——这些是「好不好玩」的地基。</p>
+        <div class="who"><span class="chip">ChatGPT</span><span class="chip">WorkBuddy</span></div>
+      </div>
+      <div class="step reveal">
+        <div class="idx">STEP 02</div>
+        <h3>主循环实现</h3>
+        <p>requestAnimationFrame 循环、重力与跳跃初速度、AABB 碰撞、障碍生成间距随速度收紧。这一层最需要稳定、可读的代码。</p>
+        <div class="who"><span class="chip">Claude</span><span class="chip">Trae</span></div>
+      </div>
+      <div class="step reveal">
+        <div class="idx">STEP 03</div>
+        <h3>试错与调参</h3>
+        <p>跳跃高度够不够翻过障碍？飞行物该在哪个高度才「必须蹲」？间距太密会劝退、太松会无聊。这步只能真跑起来改数字。</p>
+        <div class="who"><span class="chip">Trae</span><span class="chip">ChatGPT</span></div>
+      </div>
+      <div class="step reveal">
+        <div class="idx">STEP 04</div>
+        <h3>包装与交付</h3>
+        <p>说明文案、键位提示、移动端按钮、视觉风格、最高分记忆——把「能跑」变成「别人愿意点开玩第二局」。</p>
+        <div class="who"><span class="chip">WorkBuddy</span><span class="chip">Claude</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="game-section">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-tag">Round 04 · 成品试玩</div>
+      <h2>跃迁者 JUMP DODGE</h2>
+      <p class="sec-desc">地面尖刺要跳，空中无人机要蹲，金币顺手捡。速度会越来越快，间距不会等你。史上最高分存在你自己的浏览器里。</p>
+    </div>
+
+    <div class="game-card reveal">
+      <div class="game-head">
+        <div class="game-title">
+          <div class="logo">▲</div>
+          <div>
+            <h3>跃迁者 · 跳跃躲避</h3>
+            <p>空格 / ↑ 跳跃（可二段）· ↓ 下蹲 · 纯 Canvas 手写</p>
+          </div>
+        </div>
+        <div class="hud">
+          <div class="hud-item"><span>Score</span><strong id="ui-score">0</strong></div>
+          <div class="hud-item"><span>Best</span><strong id="ui-best">0</strong></div>
+          <div class="hud-item"><span>Speed</span><strong id="ui-speed">1.0x</strong></div>
+        </div>
+      </div>
+
+      <div class="canvas-shell" id="canvas-shell" tabindex="0">
+        <canvas id="game" width="960" height="440" aria-label="跳跃躲避小游戏画面"></canvas>
+      </div>
+
+      <div class="game-foot">
+        <div class="keys">
+          <span><b>Space</b>跳跃 / 开始</span>
+          <span><b>↑</b>二段跳</span>
+          <span><b>↓</b>下蹲躲避</span>
+          <span><b>R</b>重开</span>
+        </div>
+        <div class="touch">
+          <button id="btn-jump" type="button">跳 跃</button>
+          <button id="btn-duck" type="button">下 蹲</button>
+        </div>
+        <button class="btn btn-primary" id="btn-restart" type="button">重新开始</button>
+      </div>
+    </div>
+
+    <div class="takeaway">
+      <div class="take reveal">
+        <h4>为什么是这几个数字</h4>
+        <p>跳跃初速 −13.5、重力 0.75，最大跳跃高度约 121px；地面最高障碍 56px，留了 2 倍余量，保证「看起来能过就真能过」。</p>
+      </div>
+      <div class="take reveal">
+        <h4>无人机为什么必须蹲</h4>
+        <p>它悬在离地 42–72px 的区间：站立身高 52px 正好撞上，下蹲后 30px 恰好穿过。机制靠几何而不是靠说明文字。</p>
+      </div>
+      <div class="take reveal">
+        <h4>难度是怎么涨的</h4>
+        <p>速度随距离线性上升，同时把障碍生成间距按速度等比放大，保证反应时间不会随难度崩塌——这是「难但不冤」的关键。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-inner">
+    <div>四强对决 · AI Tool Arena — 评测为主观体验，代码为原生 Canvas，无任何外部依赖。</div>
+    <div>Built for the jump. 2026</div>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- 滚动入场动画 ---------------- */
+  const revealEls = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+  if ('IntersectionObserver' in window){
+    const revealObserver = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('in');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    revealEls.forEach(function(el){ revealObserver.observe(el); });
+  } else {
+    revealEls.forEach(function(el){ el.classList.add('in'); });
+  }
+
+  /* ---------------- canvas setup ---------------- */
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const W = 960, H = 440;
+  const GROUND = 352;
+
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+  const uiScore = document.getElementById('ui-score');
+  const uiBest  = document.getElementById('ui-best');
+  const uiSpeed = document.getElementById('ui-speed');
+
+  const BEST_KEY = 'jumpdodge.best.v1';
+  let best = 0;
+  try { best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch(e) { best = 0; }
+  uiBest.textContent = best;
+
+  /* ---------------- world state ---------------- */
+  const player = {
+    x: 150, y: GROUND - 52, w: 40, h: 52, vy: 0,
+    onGround: true, jumps: 0, ducking: false, tilt: 0
+  };
+
+  let state = 'ready';       // ready | playing | over
+  let score = 0, distance = 0, speed = 6.4, shake = 0;
+  let scoreCoins = 0, isRecord = false, duckHeld = false;
+  let spawnGap = 420, spawnAcc = 0;
+  let obstacles = [], coins = [], particles = [], dust = [];
+  let lastTime = 0, elapsed = 0;
+  let inView = false;
+
+  const keys = Object.create(null);
+
+  /* ---------------- helpers ---------------- */
+  function rand(a, b){ return a + Math.random() * (b - a); }
+  function clamp(v, a, b){ return v < a ? a : (v > b ? b : v); }
+
+  function reset(){
+    player.w = 40; player.h = 52;
+    player.y = GROUND - player.h;
+    player.vy = 0;
+    player.onGround = true; player.jumps = 0; player.ducking = false; player.tilt = 0;
+    score = 0; distance = 0; speed = 6.4; shake = 0;
+    scoreCoins = 0; isRecord = false; duckHeld = false;
+    spawnGap = 430; spawnAcc = 0;
+    obstacles = []; coins = []; particles = []; dust = []; elapsed = 0;
+    uiScore.textContent = '0';
+    uiSpeed.textContent = '1.0x';
+  }
+
+  /* ---------------- input ---------------- */
+  function jump(){
+    if (state === 'ready'){ startGame(); return; }
+    if (state === 'over'){ startGame(); return; }
+    if (player.jumps < 2){
+      if (player.ducking){
+        player.ducking = false;
+        player.h = 52;
+        player.y = GROUND - 52;
+      }
+      player.vy = player.jumps === 0 ? -13.5 : -11.4;
+      player.jumps++;
+      player.onGround = false;
+      burst(player.x + player.w / 2, player.y + player.h, 8, '#67e8f9', 2.4);
+    }
+  }
+  function setDuck(on){
+    if (state !== 'playing' && state !== 'ready') return;
+    if (on === player.ducking) return;
+    if (on && !player.onGround) return;
+    player.ducking = on;
+    if (on){
+      player.h = 30;
+      player.y = GROUND - 30;
+    } else {
+      player.h = 52;
+      if (player.onGround) player.y = GROUND - 52;
+    }
+  }
+
+  window.addEventListener('keydown', function(e){
+    const k = e.key;
+    const tracked = ['ArrowUp','ArrowDown','Space',' ','w','W','s','S'];
+    if (tracked.indexOf(k) === -1 && k !== 'r' && k !== 'R') return;
+    if (!inView) return;
+    if (k === 'ArrowUp' || k === ' ' || k === 'Space' || k === 'w' || k === 'W'){
+      e.preventDefault();
+      if (!keys[k]) jump();
+      keys[k] = true;
+    } else if (k === 'ArrowDown' || k === 's' || k === 'S'){
+      e.preventDefault();
+      duckHeld = true;
+      setDuck(true);
+      keys[k] = true;
+    } else if (k === 'r' || k === 'R'){
+      startGame();
+    }
+  }, { passive:false });
+
+  window.addEventListener('keyup', function(e){
+    const k = e.key;
+    if (k === 'ArrowDown' || k === 's' || k === 'S'){ duckHeld = false; setDuck(false); keys[k] = false; }
+    if (k === 'ArrowUp' || k === ' ' || k === 'Space' || k === 'w' || k === 'W') keys[k] = false;
+  });
+
+  document.getElementById('btn-jump').addEventListener('pointerdown', function(e){ e.preventDefault(); jump(); });
+  document.getElementById('btn-duck').addEventListener('pointerdown', function(e){ e.preventDefault(); duckHeld = true; setDuck(true); });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+    document.getElementById('btn-duck').addEventListener(ev, function(){ duckHeld = false; setDuck(false); });
+  });
+  document.getElementById('btn-restart').addEventListener('click', function(){
+    startGame();
+    document.getElementById('canvas-shell').focus();
+  });
+  document.getElementById('canvas-shell').addEventListener('pointerdown', function(){
+    if (state === 'ready' || state === 'over') { startGame(); }
+  });
+
+  if ('IntersectionObserver' in window){
+    new IntersectionObserver(function(entries){
+      inView = entries[0].isIntersecting;
+    }, { threshold: 0.25 }).observe(document.getElementById('canvas-shell'));
+  } else {
+    inView = true;
+  }
+
+  function startGame(){
+    reset();
+    state = 'playing';
+    lastTime = performance.now();
+  }
+
+  /* ---------------- particles ---------------- */
+  function burst(x, y, n, color, spd){
+    for (let i = 0; i < n; i++){
+      const a = rand(-Math.PI, 0);
+      const v = rand(0.6, 1) * (spd || 3);
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+        life: 1, size: rand(2, 4.6), color: color
+      });
+    }
+  }
+  function puff(x, y, n){
+    for (let i = 0; i < n; i++){
+      dust.push({
+        x: x + rand(-8, 8), y: y - rand(0, 6),
+        vx: rand(-1.6, -0.3) - speed * 0.12, vy: rand(-1.4, -0.2),
+        life: 1, size: rand(2, 5)
+      });
+    }
+  }
+
+  /* ---------------- spawn ---------------- */
+  function spawnObstacle(){
+    const r = Math.random();
+    const diff = clamp(distance / 4200, 0, 1);
+
+    if (r < 0.42){
+      // ground spikes: must jump
+      const n = Math.random() < 0.28 + diff * 0.22 ? 2 : 1;
+      for (let i = 0; i < n; i++){
+        const w = rand(24, 34);
+        const h = rand(28, 50 + diff * 6);
+        obstacles.push({ type:'spike', x: W + 40 + i * (w + 10), y: GROUND - h, w: w, h: h, hit: false });
+      }
+    } else if (r < 0.72){
+      // drone: must duck
+      const h = 30, w = rand(44, 58);
+      obstacles.push({ type:'drone', x: W + 40, y: GROUND - 72, w: w, h: h, bob: rand(0, 6.28), hit: false });
+    } else if (r < 0.9){
+      // crate: tall, must double-jump sometimes
+      const h = rand(44, 56);
+      obstacles.push({ type:'crate', x: W + 40, y: GROUND - h, w: rand(32, 42), h: h, hit: false });
+    } else {
+      // combo: spike + drone together
+      obstacles.push({ type:'spike', x: W + 40, y: GROUND - 40, w: 26, h: 40, hit: false });
+      obstacles.push({ type:'drone', x: W + 130, y: GROUND - 72, w: 48, h: 30, bob: 0, hit: false });
+    }
+
+    spawnGap = rand(300, 470) * (speed / 6.4) * (1 - diff * 0.12);
+    spawnAcc = 0;
+  }
+
+  function spawnCoin(){
+    const y = Math.random() < 0.5 ? GROUND - 96 : GROUND - 148;
+    coins.push({ x: W + 40, y: y, r: 9, t: rand(0, 6.28), got: false });
+  }
+
+  /* ---------------- physics / update ---------------- */
+  function update(dt){
+    if (state !== 'playing') return;
+
+    elapsed += dt;
+    speed = 6.4 + Math.min(5.8, distance / 1600);
+    distance += speed * dt;
+
+    // gravity
+    player.vy += 0.75 * dt;
+    player.y += player.vy * dt;
+
+    const floorY = GROUND - player.h;
+    if (player.y >= floorY){
+      if (!player.onGround && player.vy > 2){ puff(player.x + player.w/2, GROUND, 6); }
+      player.y = floorY;
+      player.vy = 0;
+      player.onGround = true;
+      player.jumps = 0;
+      if (duckHeld && !player.ducking){
+        player.ducking = true;
+        player.h = 30;
+        player.y = GROUND - 30;
+      }
+    } else {
+      player.onGround = false;
+    }
+
+    // tilt
+    const targetTilt = player.onGround ? 0 : clamp(player.vy * 0.028, -0.28, 0.34);
+    player.tilt += (targetTilt - player.tilt) * 0.16 * dt;
+
+    // spawn
+    spawnAcc += speed * dt;
+    if (spawnAcc >= spawnGap) spawnObstacle();
+    if (Math.random() < 0.012 * dt) spawnCoin();
+
+    // obstacles
+    for (let i = obstacles.length - 1; i >= 0; i--){
+      const o = obstacles[i];
+      o.x -= speed * dt;
+      if (o.type === 'drone'){
+        o.bob += 0.05 * dt;
+        o.drawY = o.y + Math.sin(o.bob) * 3;
+      }
+      if (o.x + o.w < -60) obstacles.splice(i, 1);
+    }
+
+    // coins
+    for (let i = coins.length - 1; i >= 0; i--){
+      const c = coins[i];
+      c.x -= speed * dt;
+      c.t += 0.14 * dt;
+      if (c.x < -40) coins.splice(i, 1);
+    }
+
+    // particles
+    for (let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 0.12 * dt; p.life -= 0.026 * dt;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+    for (let i = dust.length - 1; i >= 0; i--){
+      const d = dust[i];
+      d.x += d.vx * dt; d.y += d.vy * dt; d.life -= 0.02 * dt; d.size += 0.12 * dt;
+      if (d.life <= 0) dust.splice(i, 1);
+    }
+
+    // collisions
+    const hitX = 5, hitY = 4;
+    const pr = {
+      x: player.x + hitX,
+      y: player.y + hitY,
+      w: player.w - hitX * 2,
+      h: player.h - hitY
+    };
+    for (let i = 0; i < obstacles.length; i++){
+      const o = obstacles[i];
+      const oy = o.type === 'drone' ? (o.drawY || o.y) : o.y;
+      if (pr.x < o.x + o.w && pr.x + pr.w > o.x && pr.y < oy + o.h && pr.y + pr.h > oy){
+        die();
+        return;
+      }
+    }
+    for (let i = 0; i < coins.length; i++){
+      const c = coins[i];
+      const cx = player.x + player.w / 2, cy = player.y + player.h / 2;
+      const dx = (c.x) - cx, dy = (c.y) - cy;
+      if (dx * dx + dy * dy < (c.r + 26) * (c.r + 26)){
+        scoreCoins += 5;
+        burst(c.x, c.y, 12, '#fbbf24', 3.4);
+        coins.splice(i, 1);
+        break;
+      }
+    }
+
+    // score from distance
+    score = Math.floor(distance / 10) + scoreCoins;
+    uiScore.textContent = score;
+    uiSpeed.textContent = (speed / 6.4).toFixed(1) + 'x';
+    shake *= 0.88;
+  }
+
+  function die(){
+    state = 'over';
+    shake = 16;
+    burst(player.x + player.w / 2, player.y + player.h / 2, 26, '#fb7185', 5.2);
+    burst(player.x + player.w / 2, player.y + player.h / 2, 14, '#a78bfa', 3.6);
+    if (score > best){
+      best = score;
+      isRecord = true;
+      try { localStorage.setItem(BEST_KEY, String(best)); } catch(e) {}
+      uiBest.textContent = best;
+    }
+  }
+
+  /* ---------------- drawing ---------------- */
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function drawSky(){
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0a1220');
+    g.addColorStop(0.55, '#0d1a2c');
+    g.addColorStop(1, '#081018');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // glow sun
+    const sx = 760, sy = 108;
+    const rg = ctx.createRadialGradient(sx, sy, 0, sx, sy, 220);
+    rg.addColorStop(0, 'rgba(34,211,238,.30)');
+    rg.addColorStop(0.4, 'rgba(34,211,238,.07)');
+    rg.addColorStop(1, 'rgba(34,211,238,0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(sx - 220, sy - 220, 440, 440);
+    ctx.fillStyle = 'rgba(125,211,252,.9)';
+    ctx.beginPath(); ctx.arc(sx, sy, 34, 0, 6.283); ctx.fill();
+
+    // stars
+    for (let i = 0; i < 46; i++){
+      const x = (i * 137.5) % W;
+      const y = (i * 73.3) % 210;
+      const tw = 0.35 + 0.65 * Math.abs(Math.sin(elapsed * 0.6 + i));
+      ctx.fillStyle = 'rgba(200,230,255,' + (0.12 + tw * 0.4) + ')';
+      ctx.fillRect(x, y, 1.6, 1.6);
+    }
+
+    // far mountains
+    const off1 = (distance * 0.18) % 480;
+    ctx.fillStyle = 'rgba(18,32,52,.85)';
+    for (let i = -1; i < 4; i++){
+      const bx = i * 480 - off1;
+      ctx.beginPath();
+      ctx.moveTo(bx, GROUND + 10);
+      ctx.lineTo(bx + 120, 196);
+      ctx.lineTo(bx + 235, GROUND + 10);
+      ctx.lineTo(bx + 330, 226);
+      ctx.lineTo(bx + 480, GROUND + 10);
+      ctx.closePath(); ctx.fill();
+    }
+    // near hills
+    const off2 = (distance * 0.42) % 360;
+    ctx.fillStyle = 'rgba(12,24,40,.95)';
+    for (let i = -1; i < 4; i++){
+      const bx = i * 360 - off2;
+      ctx.beginPath();
+      ctx.moveTo(bx, GROUND + 10);
+      ctx.quadraticCurveTo(bx + 90, 250, bx + 190, GROUND + 10);
+      ctx.quadraticCurveTo(bx + 280, 268, bx + 360, GROUND + 10);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+
+  function drawGround(){
+    ctx.fillStyle = '#060c14';
+    ctx.fillRect(0, GROUND, W, H - GROUND);
+
+    // top neon line
+    const lg = ctx.createLinearGradient(0, 0, W, 0);
+    lg.addColorStop(0, 'rgba(34,211,238,.15)');
+    lg.addColorStop(0.5, 'rgba(34,211,238,.85)');
+    lg.addColorStop(1, 'rgba(167,139,250,.35)');
+    ctx.strokeStyle = lg;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, GROUND + 1); ctx.lineTo(W, GROUND + 1); ctx.stroke();
+
+    // scrolling grid
+    const off = (distance * 1) % 64;
+    ctx.strokeStyle = 'rgba(34,211,238,.10)';
+    ctx.lineWidth = 1;
+    for (let x = -off; x < W; x += 64){
+      ctx.beginPath(); ctx.moveTo(x, GROUND + 8); ctx.lineTo(x - 34, H); ctx.stroke();
+    }
+    for (let y = GROUND + 20; y < H; y += 22){
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(34,211,238,.22)';
+    ctx.fillRect(0, GROUND + 1, W, 2);
+  }
+
+  function drawPlayer(){
+    const p = player;
+    ctx.save();
+    ctx.translate(p.x + p.w / 2, p.y + p.h);
+    ctx.rotate(p.tilt * 0.5);
+
+    const w = p.w, h = p.h;
+
+    // shadow on ground
+    const shadowScale = clamp(1 - (GROUND - p.h - p.y) / 190, 0.25, 1);
+    ctx.save();
+    ctx.rotate(-p.tilt * 0.5);
+    ctx.globalAlpha = 0.35 * shadowScale;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(0, GROUND - (p.y + p.h) + 2, w * 0.5 * shadowScale, 5, 0, 0, 6.283);
+    ctx.fill();
+    ctx.restore();
+
+    // body glow
+    ctx.shadowColor = 'rgba(34,211,238,.75)';
+    ctx.shadowBlur = 18;
+    const bg = ctx.createLinearGradient(-w/2, -h, w/2, 0);
+    bg.addColorStop(0, '#7dd3fc');
+    bg.addColorStop(0.5, '#22d3ee');
+    bg.addColorStop(1, '#8b5cf6');
+    ctx.fillStyle = bg;
+    roundRect(-w / 2, -h, w, h, 12);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // inner highlight
+    ctx.fillStyle = 'rgba(255,255,255,.22)';
+    roundRect(-w / 2 + 5, -h + 6, w - 10, h * 0.22, 6);
+    ctx.fill();
+
+    // eyes
+    const eyeY = -h + (p.ducking ? 15 : 17);
+    ctx.fillStyle = '#04121a';
+    ctx.beginPath(); ctx.arc(-8, eyeY, 3.4, 0, 6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(7, eyeY, 3.4, 0, 6.283); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.beginPath(); ctx.arc(-9, eyeY - 1, 1.2, 0, 6.283); ctx.fill();
+    ctx.beginPath(); ctx.arc(6, eyeY - 1, 1.2, 0, 6.283); ctx.fill();
+
+    // legs when grounded
+    if (p.onGround && !p.ducking){
+      const swing = Math.sin(distance * 0.35) * 4;
+      ctx.strokeStyle = '#8b5cf6';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-8, -2); ctx.lineTo(-8 + swing, 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(8, -2); ctx.lineTo(8 - swing, 4); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawObstacles(){
+    for (let i = 0; i < obstacles.length; i++){
+      const o = obstacles[i];
+      if (o.type === 'spike'){
+        const cx = o.x + o.w / 2;
+        const g = ctx.createLinearGradient(0, o.y, 0, o.y + o.h);
+        g.addColorStop(0, '#fda4af');
+        g.addColorStop(1, '#9f1239');
+        ctx.fillStyle = g;
+        ctx.shadowColor = 'rgba(251,113,133,.7)';
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.moveTo(cx, o.y);
+        ctx.lineTo(o.x + o.w, o.y + o.h);
+        ctx.lineTo(o.x, o.y + o.h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,.35)';
+        ctx.beginPath();
+        ctx.moveTo(cx, o.y + 4);
+        ctx.lineTo(cx + o.w * 0.16, o.y + o.h - 2);
+        ctx.lineTo(cx - o.w * 0.02, o.y + o.h - 2);
+        ctx.closePath(); ctx.fill();
+      } else if (o.type === 'crate'){
+        const g = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.h);
+        g.addColorStop(0, '#fde68a');
+        g.addColorStop(1, '#b45309');
+        ctx.fillStyle = g;
+        ctx.shadowColor = 'rgba(251,191,36,.55)';
+        ctx.shadowBlur = 14;
+        roundRect(o.x, o.y, o.w, o.h, 7);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(0,0,0,.28)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(o.x + 4, o.y + o.h * 0.3); ctx.lineTo(o.x + o.w - 4, o.y + o.h * 0.3);
+        ctx.moveTo(o.x + 4, o.y + o.h * 0.66); ctx.lineTo(o.x + o.w - 4, o.y + o.h * 0.66);
+        ctx.stroke();
+      } else {
+        // drone
+        const y = o.drawY || o.y;
+        // rotor glow
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = 'rgba(167,139,250,.35)';
+        ctx.beginPath(); ctx.ellipse(o.x + o.w / 2, y - 6, o.w * 0.62, 8, 0, 0, 6.283); ctx.fill();
+        ctx.restore();
+
+        const g = ctx.createLinearGradient(o.x, y, o.x, y + o.h);
+        g.addColorStop(0, '#c4b5fd');
+        g.addColorStop(1, '#6d28d9');
+        ctx.fillStyle = g;
+        ctx.shadowColor = 'rgba(139,92,246,.8)';
+        ctx.shadowBlur = 16;
+        roundRect(o.x, y, o.w, o.h, 9);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // scanning eye
+        ctx.fillStyle = '#0b1020';
+        ctx.beginPath(); ctx.ellipse(o.x + o.w / 2, y + o.h / 2, o.w * 0.24, 7, 0, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#f472b6';
+        const eyeX = o.x + o.w / 2 + Math.sin(elapsed * 3) * o.w * 0.1;
+        ctx.beginPath(); ctx.arc(eyeX, y + o.h / 2, 3.4, 0, 6.283); ctx.fill();
+
+        // warning laser downward
+        ctx.strokeStyle = 'rgba(244,114,182,.18)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(o.x + o.w / 2, y + o.h); ctx.lineTo(o.x + o.w / 2, GROUND); ctx.stroke();
+      }
+    }
+  }
+
+  function drawCoins(){
+    for (let i = 0; i < coins.length; i++){
+      const c = coins[i];
+      const sq = Math.abs(Math.cos(c.t));
+      ctx.save();
+      ctx.translate(c.x, c.y + Math.sin(c.t * 0.6) * 4);
+      ctx.shadowColor = 'rgba(251,191,36,.8)';
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, c.r * (0.35 + sq * 0.65), c.r, 0, 0, 6.283);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255,255,255,.65)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, c.r * (0.35 + sq * 0.65) * 0.6, c.r * 0.6, 0, 0, 6.283);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawParticles(){
+    for (let i = 0; i < dust.length; i++){
+      const d = dust[i];
+      ctx.globalAlpha = Math.max(0, d.life) * 0.5;
+      ctx.fillStyle = '#9ecbff';
+      ctx.beginPath(); ctx.arc(d.x, d.y, d.size, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    for (let i = 0; i < particles.length; i++){
+      const p = particles[i];
+      ctx.globalAlpha = clamp(p.life, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawOverlay(){
+    if (state === 'playing') return;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(4,8,14,.62)';
+    ctx.fillRect(0, 0, W, H);
+
+    if (state === 'ready'){
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#e8eefb';
+      ctx.font = '800 46px "PingFang SC","Microsoft YaHei",system-ui,sans-serif';
+      ctx.fillText('跃 迁 者', W / 2, H / 2 - 58);
+
+      ctx.fillStyle = 'rgba(34,211,238,.95)';
+      ctx.font = '700 15px "PingFang SC",system-ui,sans-serif';
+      ctx.fillText('JUMP · DODGE · SURVIVE', W / 2, H / 2 - 24);
+
+      ctx.fillStyle = '#9fb0c8';
+      ctx.font = '400 16px "PingFang SC",system-ui,sans-serif';
+      ctx.fillText('空格 / ↑ 跳跃（空中再按一次二段跳）', W / 2, H / 2 + 22);
+      ctx.fillText('↓ 下蹲，穿过低空无人机', W / 2, H / 2 + 50);
+
+      const pulse = 0.55 + 0.45 * Math.sin(elapsed * 3.2);
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#67e8f9';
+      ctx.font = '700 17px "PingFang SC",system-ui,sans-serif';
+      ctx.fillText('按 空格 或 点击画面 开始', W / 2, H / 2 + 108);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#fb7185';
+      ctx.font = '800 40px "PingFang SC","Microsoft YaHei",system-ui,sans-serif';
+      ctx.fillText('撞 上 了', W / 2, H / 2 - 66);
+
+      ctx.fillStyle = '#e8eefb';
+      ctx.font = '800 62px "PingFang SC",system-ui,sans-serif';
+      ctx.fillText(String(score), W / 2, H / 2 + 6);
+
+      ctx.fillStyle = '#8ea0b8';
+      ctx.font = '400 14px "PingFang SC",system-ui,sans-serif';
+      ctx.fillText('本局得分', W / 2, H / 2 + 34);
+
+      ctx.fillStyle = score >= best && score > 0 ? '#a3e635' : '#cfdcee';
+      ctx.font = '600 16px "PingFang SC",system-ui,sans-serif';
+      ctx.fillText(isRecord && score > 0 ? '新纪录！' : '最高分 ' + best, W / 2, H / 2 + 68);
+
+      const pulse = 0.55 + 0.45 * Math.sin(elapsed * 3.2);
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#67e8f9';
+      ctx.font = '700 16px "PingFang SC",system-ui,sans-serif';
+      ctx.fillText('按 空格 / R 或 点击画面 再来一局', W / 2, H / 2 + 116);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
+  function render(){
+    ctx.save();
+    if (shake > 0.4){
+      ctx.translate(rand(-shake, shake) * 0.5, rand(-shake, shake) * 0.5);
+    }
+    drawSky();
+    drawGround();
+    drawCoins();
+    drawObstacles();
+    drawParticles();
+    drawPlayer();
+    ctx.restore();
+    drawOverlay();
+  }
+
+  /* ---------------- loop ---------------- */
+  function loop(now){
+    if (!lastTime) lastTime = now;
+    let dt = (now - lastTime) / 16.667;
+    lastTime = now;
+    dt = clamp(dt, 0, 2.4);
+
+    // idle animation still advances for stars / overlays
+    if (state !== 'playing') { elapsed += dt * 0.6; }
+
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  // keep local best in sync when page reload restores
+  uiBest.textContent = best;
+  requestAnimationFrame(loop);
+
+  /* ---------------- canvas click (desktop) ---------------- */
+  canvas.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    if (state === 'playing') jump();
+  });
+
+  /* ---------------- keyboard focus helpers ---------------- */
+  document.getElementById('canvas-shell').addEventListener('focus', function(){});
+})();
+</script>
+</body>
+</html>
